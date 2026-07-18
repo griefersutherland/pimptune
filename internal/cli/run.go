@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/goodieshq/sceptune/internal/crt"
-	"github.com/goodieshq/sceptune/internal/scep"
+	"github.com/griefersutherland/pimptune/internal/crt"
+	"github.com/griefersutherland/pimptune/internal/scep"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v3"

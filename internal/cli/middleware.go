@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/goodieshq/sceptune/internal/utils"
+	"github.com/griefersutherland/pimptune/internal/utils"
 	"golang.org/x/time/rate"
 )
 

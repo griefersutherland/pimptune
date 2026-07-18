@@ -1,11 +1,11 @@
 package utils
 
-var sceptuneVersion = "dev"
+var pimptuneVersion = "dev"
 
-func GetSceptuneName() string {
-	return "sceptune/v" + sceptuneVersion
+func GetPimptuneName() string {
+	return "pimptune/v" + pimptuneVersion
 }
 
-func GetSceptuneVersion() string {
-	return sceptuneVersion
+func GetPimptuneVersion() string {
+	return pimptuneVersion
 }

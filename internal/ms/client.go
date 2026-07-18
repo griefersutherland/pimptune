@@ -14,7 +14,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/goodieshq/sceptune/internal/utils"
+	"github.com/griefersutherland/pimptune/internal/utils"
 	msgraph "github.com/microsoftgraph/msgraph-sdk-go"
 )
 
@@ -159,8 +159,8 @@ func (c *MSClient) intuneInfo(ctx context.Context) (endpoint string, headers map
 	headers = map[string]string{
 		"Authorization":     "Bearer " + token,
 		"api-version":       apiVersionIntune,
-		"UserAgent":         utils.GetSceptuneName(), // java implementation uses "UserAgent" instead of "User-Agent"
-		"User-Agent":        utils.GetSceptuneName(), // include both just in case
+		"UserAgent":         utils.GetPimptuneName(), // java implementation uses "UserAgent" instead of "User-Agent"
+		"User-Agent":        utils.GetPimptuneName(), // include both just in case
 		"client-request-id": activityId,
 	}
 
@@ -179,7 +179,7 @@ func (c *MSClient) NotifyFailure(ctx context.Context, csr, txid string, hResult 
 			TransactionID:      txid,
 			HResult:            hResult,
 			ErrorDescription:   errorDescription,
-			CallerInfo:         utils.GetSceptuneName(),
+			CallerInfo:         utils.GetPimptuneName(),
 		},
 	}
 
@@ -238,7 +238,7 @@ func (c *MSClient) NotifySuccess(ctx context.Context, csr, txid string, crt, roo
 			IssuingCertificateAuthority:  crt.Issuer.String(),
 			CAConfiguration:              "",
 			CertificateAuthority:         root.Subject.CommonName,
-			CallerInfo:                   utils.GetSceptuneName(),
+			CallerInfo:                   utils.GetPimptuneName(),
 		},
 	}
 
@@ -290,7 +290,7 @@ func (c *MSClient) VerifyCSR(ctx context.Context, csr string, txid string) (bool
 	var reqBody ValidateCSRRequest
 	reqBody.Request.CertificateRequest = csr
 	reqBody.Request.TransactionID = txid
-	reqBody.Request.CallerInfo = utils.GetSceptuneName()
+	reqBody.Request.CallerInfo = utils.GetPimptuneName()
 
 	var resBody IntuneResponse
 

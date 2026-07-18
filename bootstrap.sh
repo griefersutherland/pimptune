@@ -4,7 +4,7 @@ set -euo pipefail
 
 ### Settings/variables
 
-# Internal DNS name — matches container name and SCEPTUNE_STEP_API_URL
+# Internal DNS name — matches container name and PIMPTUNE_STEP_API_URL
 CA_HOST="stepca-clients"
 CA_PORT=443
 
@@ -17,8 +17,8 @@ MIN_TLS_DUR="24h"
 MAX_TLS_DUR="720h"
 DEF_TLS_DUR="${MAX_TLS_DUR}"
 
-# Name for the provisioner user, "sceptune" is perfectly fine
-PROVISIONER_NAME="sceptune"
+# Name for the provisioner user, "pimptune" is perfectly fine
+PROVISIONER_NAME="pimptune"
 
 # The folder containing all of the certificate and key files
 INFO_SRC="./info"
@@ -40,11 +40,11 @@ STEP_DIR="./ca"
 # - $INFO_SRC/scep_ra.key = the encrypted private key for the scep_ra.crt (must be RSA type)
 # - $INFO_SRC/scep_ra.txt = the plaintext password used to decrypt scep_ra.key
 #
-# - $INFO_SRC/sceptune.jwk.txt = the plaintext password used to encrypt a new JWK key
+# - $INFO_SRC/pimptune.jwk.txt = the plaintext password used to encrypt a new JWK key
 #
 # ################################################################################################
 
-ALL_FILES="root_ca.crt intermediate_ca.crt intermediate_ca.key intermediate_ca.txt scep_ra.crt scep_ra.key scep_ra.txt sceptune.jwk.txt"
+ALL_FILES="root_ca.crt intermediate_ca.crt intermediate_ca.key intermediate_ca.txt scep_ra.crt scep_ra.key scep_ra.txt pimptune.jwk.txt"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -129,7 +129,7 @@ if [[ -d "$STEP_DIR/config" ]]; then
     exit 1
 fi
 
-# Check all certificate and key files required for sceptune
+# Check all certificate and key files required for pimptune
 for f in $ALL_FILES; do
     if [[ ! -f "$INFO_SRC/$f" ]]; then
         error "Missing required file: $INFO_SRC/$f"
@@ -155,9 +155,9 @@ if [[ -z "$RA_PASSWORD" ]]; then
 fi
 verify_key "SCEP RA" "$INFO_SRC/scep_ra.crt" "$INFO_SRC/scep_ra.key" "$RA_PASSWORD"
 
-read -r JWK_PASSWORD < "$INFO_SRC/sceptune.jwk.txt"
+read -r JWK_PASSWORD < "$INFO_SRC/pimptune.jwk.txt"
 if [[ -z "$JWK_PASSWORD" ]]; then
-    error "sceptune.jwk.txt is empty"
+    error "pimptune.jwk.txt is empty"
     exit 1
 fi
 success "All secret key values verified"
@@ -179,8 +179,8 @@ echo -n "$CA_PASSWORD"  > "$STEP_DIR/secrets/password"
 chmod 600 "$STEP_DIR/secrets/password"
 echo -n "$RA_PASSWORD"  > "$STEP_DIR/secrets/scep_ra.txt"
 chmod 600 "$STEP_DIR/secrets/scep_ra.txt"
-echo -n "$JWK_PASSWORD" > "$STEP_DIR/secrets/sceptune.jwk.txt"
-chmod 600 "$STEP_DIR/secrets/sceptune.jwk.txt"
+echo -n "$JWK_PASSWORD" > "$STEP_DIR/secrets/pimptune.jwk.txt"
+chmod 600 "$STEP_DIR/secrets/pimptune.jwk.txt"
 
 # Run step ca init to generate boilerplate config
 # Using internal container name as DNS — step-ca never needs to be externally reachable
@@ -192,7 +192,7 @@ INIT_OUTPUT=$(docker run --rm \
         --dns "$CA_HOST" \
         --address ":$CA_PORT" \
         --provisioner "$PROVISIONER_NAME" \
-        --provisioner-password-file /home/step/secrets/sceptune.jwk.txt \
+        --provisioner-password-file /home/step/secrets/pimptune.jwk.txt \
         --password-file /home/step/secrets/password \
     2>&1)
 if [[ $? -ne 0 ]]; then
@@ -216,12 +216,12 @@ chmod 600 "$STEP_DIR/secrets/scep_ra_key"
 ENCRYPTED_JWK=$(jq -r ".authority.provisioners[] | select(.name == \"${PROVISIONER_NAME}\") | .encryptedKey" "$STEP_DIR/config/ca.json")
 
 if [[ -z "$ENCRYPTED_JWK" || "$ENCRYPTED_JWK" == "null" ]]; then
-    error "Could not extract encryptedKey for sceptune provisioner from ca.json"
+    error "Could not extract encryptedKey for pimptune provisioner from ca.json"
     exit 1
 fi
 
-echo -n "$ENCRYPTED_JWK" > "$STEP_DIR/secrets/sceptune.jwk"
-chmod 600 "$STEP_DIR/secrets/sceptune.jwk"
+echo -n "$ENCRYPTED_JWK" > "$STEP_DIR/secrets/pimptune.jwk"
+chmod 600 "$STEP_DIR/secrets/pimptune.jwk"
 
 # Remove the auto-generated root key, it has no place here
 rm -f "$STEP_DIR/secrets/root_ca_key"
@@ -271,10 +271,10 @@ jq --arg name "$PROVISIONER_NAME" \
     || { error "Failed to patch provisioner claims into ca.json"; exit 1; }
 
 jq \
-    --arg tplFile "templates/certs/sceptune.tpl" \
+    --arg tplFile "templates/certs/pimptune.tpl" \
     --arg crlURL "$CRL_URL" \
     --arg crtURL "$CRT_URL" \
-    '(.authority.provisioners[] | select(.name == "sceptune")).options = {
+    '(.authority.provisioners[] | select(.name == "pimptune")).options = {
         "x509": {
             "templateFile": $tplFile,
             "templateData": {
@@ -287,7 +287,7 @@ jq \
     && mv "$STEP_DIR/config/ca.json.tmp" "$STEP_DIR/config/ca.json" \
     || { error "Failed to patch provisioner template into ca.json"; exit 1; }
 
-cat > "$STEP_DIR/templates/certs/sceptune.tpl" <<EOF
+cat > "$STEP_DIR/templates/certs/pimptune.tpl" <<EOF
 {
     "subject": {{ toJson .Insecure.CR.Subject }},
     "extensions": {{ toJson .Insecure.CR.Extensions }},
@@ -298,18 +298,18 @@ cat > "$STEP_DIR/templates/certs/sceptune.tpl" <<EOF
 EOF
 
 STEPCA_UID=1000
-SCEPTUNE_UID=65532
+PIMPTUNE_UID=65532
 
 sudo chown "$STEPCA_UID" \
     "$STEP_DIR/secrets/intermediate_ca_key" \
     "$STEP_DIR/secrets/password" \
-    "$STEP_DIR/templates/certs/sceptune.tpl"
+    "$STEP_DIR/templates/certs/pimptune.tpl"
 
-sudo chown "$SCEPTUNE_UID" \
+sudo chown "$PIMPTUNE_UID" \
     "$STEP_DIR/secrets/scep_ra.txt" \
     "$STEP_DIR/secrets/scep_ra_key" \
-    "$STEP_DIR/secrets/sceptune.jwk" \
-    "$STEP_DIR/secrets/sceptune.jwk.txt"
+    "$STEP_DIR/secrets/pimptune.jwk" \
+    "$STEP_DIR/secrets/pimptune.jwk.txt"
 
 success "Files installed, configuration created, CRLs enabled, and environment cleaned"
 echo ""

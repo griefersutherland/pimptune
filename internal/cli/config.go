@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/go-jose/go-jose/v4"
-	"github.com/goodieshq/sceptune/internal/utils"
+	"github.com/griefersutherland/pimptune/internal/utils"
 	"github.com/urfave/cli/v3"
 )
 

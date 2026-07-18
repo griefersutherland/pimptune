@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/goodieshq/sceptune/internal/utils"
+	"github.com/griefersutherland/pimptune/internal/utils"
 	msgraph "github.com/microsoftgraph/msgraph-sdk-go"
 	"github.com/microsoftgraph/msgraph-sdk-go/serviceprincipals"
 	"github.com/rs/zerolog/log"

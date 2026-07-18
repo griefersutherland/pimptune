@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/goodieshq/sceptune/internal/cli"
+	"github.com/griefersutherland/pimptune/internal/cli"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 

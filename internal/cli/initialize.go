@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/goodieshq/sceptune/internal/ms"
-	"github.com/goodieshq/sceptune/internal/step"
-	"github.com/goodieshq/sceptune/internal/store"
-	"github.com/goodieshq/sceptune/internal/utils"
+	"github.com/griefersutherland/pimptune/internal/ms"
+	"github.com/griefersutherland/pimptune/internal/step"
+	"github.com/griefersutherland/pimptune/internal/store"
+	"github.com/griefersutherland/pimptune/internal/utils"
 	"github.com/rs/zerolog/log"
 )
 

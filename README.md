@@ -1,5 +1,7 @@
 
 # How it Works
+Special thanks to [GoodiesHQ](https://github.com/GoodiesHQ) for the original code this project is based on.
+
 PIMPTune is a SCEP ([Simple Certificate Enrollment Protocol](https://en.wikipedia.org/wiki/Simple_Certificate_Enrollment_Protocol)) proxy server designed specifically for devices managed through [Microsoft Intune](https://intune.microsoft.com/). It sits between Intune-managed clients and a [Smallstep step-ca](https://smallstep.com/docs/step-ca/) certificate authority, acting as a trusted intermediary that validates enrollment requests against Microsoft's APIs before issuing certificates.
 
 The core problem it solves: Intune wants to validate that a SCEP challenge came from a device it provisioned, and step-ca wants a properly authenticated request before signing a certificate. PIMPTune bridges those two worlds.
@@ -30,8 +32,8 @@ PIMPTune typically runs behind a reverse proxy that handles TLS termination and 
 It is highly recommended that you utilize secure PKI practices when dealing with certificates along the chain used for PIMPTune. This may including using a cold, offline CA and/or a system of physical or cloud-based HSAs to store the private keys for this system.
 
 Some related tools of mine:
-- [bipkey](https://github.com/GoodiesHQ/bipkey): A way to derive deterministic ECC and RSA keys from a BIP-39 mnemonic and a salt.
-- [revokr](https://github.com/GoodiesHQ/revokr)Create CRL or TBS CRL from a text file of serial numbers and/or an existing CRL.
+- [bipkey](https://github.com/griefersutherland/bipkey): A way to derive deterministic ECC and RSA keys from a BIP-39 mnemonic and a salt.
+- [revokr](https://github.com/griefersutherland/revokr)Create CRL or TBS CRL from a text file of serial numbers and/or an existing CRL.
 
 The step-ca instance used by PIMPTune should utilize an Issuing CA provided by an existing offline root CA dedicated for this purpose. This Issuing CA should be provisioned as such in the microsoft certificate store(s) of all devices.
 

@@ -1,4 +1,4 @@
-module github.com/goodieshq/sceptune
+module github.com/griefersutherland/pimptune
 
 go 1.25
 

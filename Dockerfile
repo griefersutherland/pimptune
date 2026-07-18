@@ -17,8 +17,8 @@ ARG CGO_ENABLED=0
 ARG GOOS=linux
 ARG GOARCH=amd64
 ARG MAIN_PKG=/src/cmd/main.go
-ARG BIN_NAME=sceptune
-ARG VERSION_SYMBOL=github.com/goodieshq/sceptune/internal/utils.sceptuneVersion
+ARG BIN_NAME=pimptune
+ARG VERSION_SYMBOL=github.com/griefersutherland/pimptune/internal/utils.pimptuneVersion
 
 ENV CGO_ENABLED=${CGO_ENABLED} \
     GOOS=${GOOS} \
@@ -38,9 +38,9 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 # Runtime
 FROM gcr.io/distroless/static-debian12:nonroot AS runtime
 WORKDIR /app
-ARG BIN_NAME=sceptune
+ARG BIN_NAME=pimptune
 COPY --from=build /out/${BIN_NAME} /app/${BIN_NAME}
 EXPOSE 8080
 USER nonroot:nonroot
-ENTRYPOINT ["/app/sceptune"]
+ENTRYPOINT ["/app/pimptune"]
 CMD ["run"]

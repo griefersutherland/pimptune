@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-go run ./builder/builder.go -name sceptune -version-location github.com/goodieshq/sceptune/internal/utils.sceptuneVersion -release -all
+go run ./builder/builder.go -name pimptune -version-location github.com/griefersutherland/pimptune/internal/utils.pimptuneVersion -release -all
