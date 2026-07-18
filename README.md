@@ -1,8 +1,8 @@
 
 # How it Works
-SCEPTune is a SCEP ([Simple Certificate Enrollment Protocol](https://en.wikipedia.org/wiki/Simple_Certificate_Enrollment_Protocol)) proxy server designed specifically for devices managed through [Microsoft Intune](https://intune.microsoft.com/). It sits between Intune-managed clients and a [Smallstep step-ca](https://smallstep.com/docs/step-ca/) certificate authority, acting as a trusted intermediary that validates enrollment requests against Microsoft's APIs before issuing certificates.
+PIMPTune is a SCEP ([Simple Certificate Enrollment Protocol](https://en.wikipedia.org/wiki/Simple_Certificate_Enrollment_Protocol)) proxy server designed specifically for devices managed through [Microsoft Intune](https://intune.microsoft.com/). It sits between Intune-managed clients and a [Smallstep step-ca](https://smallstep.com/docs/step-ca/) certificate authority, acting as a trusted intermediary that validates enrollment requests against Microsoft's APIs before issuing certificates.
 
-The core problem it solves: Intune wants to validate that a SCEP challenge came from a device it provisioned, and step-ca wants a properly authenticated request before signing a certificate. SCEPTune bridges those two worlds.
+The core problem it solves: Intune wants to validate that a SCEP challenge came from a device it provisioned, and step-ca wants a properly authenticated request before signing a certificate. PIMPTune bridges those two worlds.
 
 ```
 Windows Device (SCEP client)
@@ -14,7 +14,7 @@ Windows Device (SCEP client)
         |
         |
         ▼
-    SCEPTune Server      
+    PIMPTune Server      
         |        ◄ ─ ► Microsoft Graph API (SCEP endpoint discovery)
         │        ◄ ─ ► Microsoft Intune API (challenge validation, notifications)
         │        ◄ ─ ► Smallstep step-ca API (certificate signing)
@@ -22,33 +22,33 @@ Windows Device (SCEP client)
     SQLite Database
     (local certificate cache)
 ```
-SCEPTune typically runs behind a reverse proxy that handles TLS termination and exposes two HTTP endpoints:
+PIMPTune typically runs behind a reverse proxy that handles TLS termination and exposes two HTTP endpoints:
  - SCEP enrollment endpoint for clients to send SCEP requests
  - CRL distribution point for clients to check revoked certs
 
 ## Recommended Setup
-It is highly recommended that you utilize secure PKI practices when dealing with certificates along the chain used for SCEPTune. This may including using a cold, offline CA and/or a system of physical or cloud-based HSAs to store the private keys for this system.
+It is highly recommended that you utilize secure PKI practices when dealing with certificates along the chain used for PIMPTune. This may including using a cold, offline CA and/or a system of physical or cloud-based HSAs to store the private keys for this system.
 
 Some related tools of mine:
 - [bipkey](https://github.com/GoodiesHQ/bipkey): A way to derive deterministic ECC and RSA keys from a BIP-39 mnemonic and a salt.
 - [revokr](https://github.com/GoodiesHQ/revokr)Create CRL or TBS CRL from a text file of serial numbers and/or an existing CRL.
 
-The step-ca instance used by SCEPTune should utilize an Issuing CA provided by an existing offline root CA dedicated for this purpose. This Issuing CA should be provisioned as such in the microsoft certificate store(s) of all devices.
+The step-ca instance used by PIMPTune should utilize an Issuing CA provided by an existing offline root CA dedicated for this purpose. This Issuing CA should be provisioned as such in the microsoft certificate store(s) of all devices.
 
 # AI Docuslop
 Hello. It's me, a human! I used Claude Code to create a human-readable form of documentation of what this program does and how it happens. I believe it's done a great job:
 
 ## Startup Sequence
 
-Before serving any requests, SCEPTune performs a series of validation steps to fail fast if anything is misconfigured:
+Before serving any requests, PIMPTune performs a series of validation steps to fail fast if anything is misconfigured:
 
 1.  **Configuration loading:** All flags and environment variables are read, parsed, and validated. This includes parsing the RA (Registration Authority) certificate and private key pair, ensuring they match, and the RA cert issuing chain.
     
 2.  **JWK provisioner key loading:** The JWK (JSON Web Key) used to authenticate with Smallstep is parsed from disk. If the key file is encrypted (JWE), it is decrypted using the provided password.
     
-3.  **Microsoft client initialization:** An Azure credential is established using the provided **tenant ID**, **client ID**, and **client secret**. SCEPTune immediately makes a live call to Microsoft Graph to discover the Intune SCEP validation endpoint, and then fetches an Intune access token. This confirms that the credentials are valid and that the application has the required `scep_challenge_provider` role before accepting any client connections.
+3.  **Microsoft client initialization:** An Azure credential is established using the provided **tenant ID**, **client ID**, and **client secret**. PIMPTune immediately makes a live call to Microsoft Graph to discover the Intune SCEP validation endpoint, and then fetches an Intune access token. This confirms that the credentials are valid and that the application has the required `scep_challenge_provider` role before accepting any client connections.
     
-4.  **Smallstep client initialization:** A connection to `step-ca` is established. The CA's root certificate fingerprint is used to pin the TLS connection, so SCEPTune will refuse to communicate with any CA whose certificate doesn't match the expected root.
+4.  **Smallstep client initialization:** A connection to `step-ca` is established. The CA's root certificate fingerprint is used to pin the TLS connection, so PIMPTune will refuse to communicate with any CA whose certificate doesn't match the expected root.
     
 5.  **Certificate store initialization:** A SQLite database is opened (or created) in WAL mode. WAL (Write-Ahead Logging) mode is used so that reads and writes don't block each other. The schema is created if it doesn't exist.
     
@@ -64,12 +64,12 @@ This is the main code path and where most of the logic lives. Every Windows devi
 
 ### Operation:  `GetCACaps`
 
-The client asks what capabilities the server supports. SCEPTune responds with a  list: `POSTPKIOperation`, `SHA-256`, `SHA-512`, `AES`, `DES3`, and `SCEPStandard`.
+The client asks what capabilities the server supports. PIMPTune responds with a  list: `POSTPKIOperation`, `SHA-256`, `SHA-512`, `AES`, `DES3`, and `SCEPStandard`.
 This tells the Windows SCEP client which algorithms it may use for the enrollment.
 
 ### Operation:  `GetCACert`
 
-The client fetches the server's certificate chain so it can encrypt its enrollment request. SCEPTune responds with a PKCS#7 bundle containing the RA certificate followed by the full CA chain. The client uses the RA certificate's public key to encrypt its request.
+The client fetches the server's certificate chain so it can encrypt its enrollment request. PIMPTune responds with a PKCS#7 bundle containing the RA certificate followed by the full CA chain. The client uses the RA certificate's public key to encrypt its request.
 
 ### Operation:  `PKIOperation`  (the main enrollment flow)
 
@@ -101,15 +101,15 @@ The CSR and challenge password are sent to the Intune `validateRequest` API. Int
 
 **5. Device compliance check** _(optional)_
 
-If compliance enforcement is enabled in SCEPTune settings, the device's compliance state is looked up via Microsoft Graph's Device Management API. The device is identified by its Common Name, which is expected to be either an Intune Device ID or an Azure AD Device ID depending on configuration. Devices in a "compliant" state pass. Devices in a grace period pass or fail depending on whether grace-period enrollment is enabled. All other states (non-compliant, unknown, etc.) result in a rejection, and Intune is notified of the denial.
+If compliance enforcement is enabled in PIMPTune settings, the device's compliance state is looked up via Microsoft Graph's Device Management API. The device is identified by its Common Name, which is expected to be either an Intune Device ID or an Azure AD Device ID depending on configuration. Devices in a "compliant" state pass. Devices in a grace period pass or fail depending on whether grace-period enrollment is enabled. All other states (non-compliant, unknown, etc.) result in a rejection, and Intune is notified of the denial.
 
 **6. Certificate signing**
 
-SCEPTune calls `step-ca` API to sign the CSR provided by the device, now that the CSR is verified to be legitimate. Authentication to `step-ca` is done with a short-lived JWT (5-minute validity) signed with the provisioner's JWK private key. The JWT carries the device's Subject Alternative Names and the CSR's public key fingerprint as claims. The signed certificate is returned.
+PIMPTune calls `step-ca` API to sign the CSR provided by the device, now that the CSR is verified to be legitimate. Authentication to `step-ca` is done with a short-lived JWT (5-minute validity) signed with the provisioner's JWK private key. The JWT carries the device's Subject Alternative Names and the CSR's public key fingerprint as claims. The signed certificate is returned.
 
 **7. Storage and Intune notification**
 
-The signed certificate is stored in the SQLite database, keyed by the `(CSR, challenge)` hash. SCEPTune then calls Intune's `successNotification` API, reporting the certificate's thumbprint, serial number, expiration date, and issuing CA. **If the success notification fails, the certificate is not returned to the client.** This ensures that Intune's records stay in sync with what was actually delivered. Only after Intune confirms receipt is the SCEP success response sent back to the device.
+The signed certificate is stored in the SQLite database, keyed by the `(CSR, challenge)` hash. PIMPTune then calls Intune's `successNotification` API, reporting the certificate's thumbprint, serial number, expiration date, and issuing CA. **If the success notification fails, the certificate is not returned to the client.** This ensures that Intune's records stay in sync with what was actually delivered. Only after Intune confirms receipt is the SCEP success response sent back to the device.
 
 **8. Response delivery**
 
@@ -119,7 +119,7 @@ The signed certificate is wrapped in a PKCS#7 success envelope, encrypted and si
 
 ### Token and endpoint caching
 
-To avoid hitting Microsoft's APIs on every request, SCEPTune caches two things:
+To avoid hitting Microsoft's APIs on every request, PIMPTune caches two things:
 
 -   **The Intune SCEP validation endpoint URI:** discovered via Microsoft Graph's Service Principals API by querying Intune's well-known application ID. Cached for 30 minutes.
 -   **The Intune access token:**  fetched from Azure AD using the OAuth 2.0 client credentials flow with the  `https://api.manage.microsoft.com//.default`  scope (note the intentional double-slash, which is a quirk of Intune's API). Tokens are considered expired 5 minutes before their actual expiry to avoid clock-skew failures, and refreshed automatically.
@@ -134,7 +134,7 @@ Each call carries a `client-request-id` header (a UUID generated per enrollment)
 
 ## Smallstep CA Integration
 
-SCEPTune communicates with `step-ca` using Smallstep's provisioner JWT authentication scheme. For each new certificate:
+PIMPTune communicates with `step-ca` using Smallstep's provisioner JWT authentication scheme. For each new certificate:
 
 1.  A short-lived JWT is constructed, signed with the provisioner's JWK private key. The JWT includes the device's Subject Alternative Names and a SHA-256 fingerprint of the public key from the CSR.
 2.  The JWT is submitted to  `step-ca`'s sign endpoint alongside the CSR.
@@ -155,4 +155,4 @@ The database runs in WAL mode with a single writer connection, which is correct 
 
 ## CRL Endpoint
 
-SCEPTune exposes a CRL (Certificate Revocation List) distribution point at a configurable path (default: `/crl`). When requested, it fetches the current CRL from `step-ca`'s `/1.0/crl` endpoint, parses it to confirm it's a valid CRL, and returns it as a DER-encoded response with the appropriate MIME type. This allows Windows clients and other PKIX-aware systems to check certificate revocation status directly from Step CA.
+PIMPTune exposes a CRL (Certificate Revocation List) distribution point at a configurable path (default: `/crl`). When requested, it fetches the current CRL from `step-ca`'s `/1.0/crl` endpoint, parses it to confirm it's a valid CRL, and returns it as a DER-encoded response with the appropriate MIME type. This allows Windows clients and other PKIX-aware systems to check certificate revocation status directly from Step CA.
