@@ -14,7 +14,7 @@ var App = cli.Command{
 	Commands: []*cli.Command{
 		{
 			Name:    "run",
-			Usage:   "Run the SCEPTune server",
+			Usage:   "Run the Pimptune server",
 			Aliases: []string{"start"},
 			Action:  run,
 			Flags: []cli.Flag{

@@ -1,5 +1,5 @@
 #!/bin/bash
-# bootstrap.sh — initialize step-ca with existing PKI for SCEPTune setup
+# bootstrap.sh — initialize step-ca with existing PKI for Pimptune setup
 set -euo pipefail
 
 ### Settings/variables
@@ -8,9 +8,9 @@ set -euo pipefail
 CA_HOST="stepca-clients"
 CA_PORT=443
 
-# CRL location, must match the CRL Path served by SCEPTune
-CRL_URL="http://clients.pki.datalinknetworks.net/intermediate_ca.crl"
-CRT_URL="http://clients.pki.datalinknetworks.net/intermediate_ca.crt"
+# CRL location, must match the CRL Path served by Pimptune
+CRL_URL="http://clients.pki.example.com/intermediate_ca.crl"
+CRT_URL="http://clients.pki.example.com/intermediate_ca.crt"
 
 # Certificate expiry info for issuing certs
 MIN_TLS_DUR="24h"
@@ -315,6 +315,6 @@ success "Files installed, configuration created, CRLs enabled, and environment c
 echo ""
 
 echo -e "${BOLD}${GREEN}####################################${RESET}"
-echo -e "${BOLD}${GREEN}#   SCEPTune Bootstrap complete!   #${RESET}"
+echo -e "${BOLD}${GREEN}#   Pimptune Bootstrap complete!   #${RESET}"
 echo -e "${BOLD}${GREEN}####################################${RESET}"
 echo ""
