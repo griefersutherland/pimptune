@@ -158,3 +158,32 @@ The database runs in WAL mode with a single writer connection, which is correct 
 ## CRL Endpoint
 
 PIMPTune exposes a CRL (Certificate Revocation List) distribution point at a configurable path (default: `/crl`). When requested, it fetches the current CRL from `step-ca`'s `/1.0/crl` endpoint, parses it to confirm it's a valid CRL, and returns it as a DER-encoded response with the appropriate MIME type. This allows Windows clients and other PKIX-aware systems to check certificate revocation status directly from Step CA.
+
+## Thanks
+
+All the actual heavy lifting here is done by other people's work. Thanks to
+the [Smallstep](https://smallstep.com/) team behind
+[step-ca](https://smallstep.com/docs/step-ca/), to the
+[SQLite](https://www.sqlite.org/) and [Go](https://go.dev/) projects, and to
+[GoodiesHQ](https://github.com/GoodiesHQ) (credited above) for the original
+code this project builds on.
+
+## Support open source
+
+If this project was useful to you, consider donating to an open-source
+project you rely on — most of them run on volunteer time and small
+donations. A few of my own favorites:
+
+- [KDE](https://kde.org/donate/)
+- [ReactOS](https://reactos.org/donate/)
+- [Matrix.org](https://donorbox.org/keep-matrix-exciting) — a free-speech,
+  end-to-end encrypted chat protocol
+- [LLVM](https://github.com/sponsors/llvm) — the compiler infrastructure
+  underneath a huge share of modern software
+
+Both feel especially important to keep funded right now, in these
+uncertain times of dark enlightenment.
+
+And if you'd like to help cover this project's own Anthropic API usage, or
+support a personal local-inference homelab, that's separate and entirely
+optional: [GoFundMe](https://gofund.me/815bb9c26)
